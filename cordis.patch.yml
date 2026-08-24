@@ -1,0 +1,5 @@
+# dsh-screenshot-capture bundle patch layer.
+# 安装本包到 profile 后,host 端加载主入口(剪贴板监听/悬浮窗/OCR/存储/整理工具)。
+- insert:
+    - id: dsh-screenshot-capture
+      name: dsh-screenshot-capture

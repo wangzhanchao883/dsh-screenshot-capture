@@ -1,0 +1,69 @@
+{
+  "name": "dsh-screenshot-capture",
+  "version": "0.2.0",
+  "description": "Point-and-shoot screenshot capture for DeepSeek Harness: clipboard watcher + system floating window (comment & key-point, copy/save-doc/save-image) + instant OCR + Obsidian per-day merging + evening AI organization. 指哪拍哪 · 截图即存:剪贴板监听 + 鼠标位置系统级悬浮窗 + 即时 OCR + Obsidian 按天合并 + 晚间 AI 整理打双链",
+  "type": "module",
+  "main": "index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wangzhanchao883/dsh-screenshot-capture.git"
+  },
+  "homepage": "https://github.com/wangzhanchao883/dsh-screenshot-capture",
+  "bugs": {
+    "url": "https://github.com/wangzhanchao883/dsh-screenshot-capture/issues"
+  },
+  "author": "wangzhanchao883",
+  "exports": {
+    ".": "./index.mjs",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.mjs",
+    "client.js",
+    "core.mjs",
+    "config.mjs",
+    "clipboard.mjs",
+    "storage.mjs",
+    "ocr.mjs",
+    "organize.mjs",
+    "scripts/",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "dev": "node dev-run.mjs",
+    "dev:auto": "node dev-run.mjs --auto doc"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0"
+  },
+  "engines": {
+    "node": "^22.0.0 || >=24"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "screenshot",
+    "clipboard",
+    "obsidian",
+    "ocr"
+  ],
+  "license": "MIT"
+}

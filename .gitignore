@@ -1,0 +1,25 @@
+# node modules / dependencies — never commit
+node_modules/
+
+# package lockfiles — this plugin is installed via `dsh plugin add` from a
+# directory or a GitHub source; a generated lockfile only churns the diff.
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# local dev / test scratch data
+test/format-vault/
+test/test-vault/
+test/test-vault2/
+test/mem/
+test/sample.png
+
+# temp / diagnostic files
+*.log
+_verify*
+_repro*
+.watchmanconfig
+
+# OS / editor
+.DS_Store
+Thumbs.db
