@@ -141,9 +141,10 @@ dsh-screenshot-capture/
 ```sh
 npm run dev          # 交互模式(真实弹窗)
 npm run dev:auto     # 自动模式:检测到截图自动存文档
+npm test             # 运行存储/整理单测(无需 DSH、无需 API key)
 ```
 
-可用环境变量 `DSC_VAULT_PATH` 覆盖 vault 路径,避免污染真实库。
+可用环境变量 `DSC_VAULT_PATH` 覆盖 vault 路径,避免污染真实库。测试说明见 [`test/README.md`](./test/README.md)。
 
 ## License
 

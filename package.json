@@ -46,7 +46,8 @@
   },
   "scripts": {
     "dev": "node dev-run.mjs",
-    "dev:auto": "node dev-run.mjs --auto doc"
+    "dev:auto": "node dev-run.mjs --auto doc",
+    "test": "node test/test-format.mjs && node test/test-storage.mjs"
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.1"
