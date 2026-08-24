@@ -1,0 +1,13 @@
+# Normalize line endings for the repository.
+# Keep LF on text files so reviewers see clean diffs regardless of the
+# contributor's OS. This also silences the "LF will be replaced by CRLF"
+# warning that appears on Windows checkouts.
+* text=auto
+
+# Explicitly force LF for the source types we author.
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.ps1 text eol=crlf

@@ -1,0 +1,21 @@
+{
+  "//": "dsh-screenshot-capture config example. Copy to %USERPROFILE%\\.dsh-screenshot-capture\\config.json and fill in your own values. The OCR key is also read from the DASHSCOPE_API_KEY environment variable (recommended).",
+  "enabled": true,
+  "vaultPath": "D:\\path\\to\\obsidian-vault",
+  "inboxFolder": "收件箱",
+  "attachmentsFolder": "attachments",
+  "knowledgeFolder": "知识库",
+  "summaryFolder": "总结",
+  "archiveFolder": "归档",
+  "recycleFolder": "回收站",
+  "ocr": {
+    "mode": "qwen",
+    "model": "qwen-vl-plus",
+    "apiKey": "",
+    "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+  },
+  "pollIntervalMs": 200,
+  "cooldownMs": 2000,
+  "dialog": { "offsetX": 16, "offsetY": 16, "previewMaxWidth": 320 },
+  "organize": { "addBacklinks": true }
+}
