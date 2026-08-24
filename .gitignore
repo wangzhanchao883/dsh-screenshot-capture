@@ -7,12 +7,11 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
-# local dev / test scratch data
+# local dev / test scratch data (the sample image used by unit tests is committed)
 test/format-vault/
 test/test-vault/
 test/test-vault2/
 test/mem/
-test/sample.png
 
 # temp / diagnostic files
 *.log

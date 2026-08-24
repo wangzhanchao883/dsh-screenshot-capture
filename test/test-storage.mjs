@@ -3,14 +3,17 @@ import { resolveConfig, ensureVault } from "../config.mjs";
 import { saveAttachment, appendEntry, updateEntryOcr, parseEntries, todayString } from "../storage.mjs";
 import { organizeDay } from "../organize.mjs";
 import { mkdirSync, copyFileSync, readFileSync, existsSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const vault = "D:/workout/deepseekharness/dsh-screenshot-capture/test/test-vault";
+// 仓库根 = <repo>/test 的上一级
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const vault = join(root, "test", "test-vault");
 rmSync(vault, { recursive: true, force: true });
 const config = resolveConfig({ vaultPath: vault });
 ensureVault(config);
 
-const src = "D:/workout/deepseekharness/dsh-screenshot-capture/test/sample.png";
+const src = join(root, "test", "sample.png");
 const date = todayString();
 const results = [];
 
