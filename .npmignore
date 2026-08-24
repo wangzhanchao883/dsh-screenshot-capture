@@ -1,0 +1,20 @@
+# When publishing to npm, ship only the runtime + docs needed by consumers.
+# The `files` field in package.json is the source of truth; this hardens it.
+
+# dev/test
+test/
+dev-run.mjs
+config.example.json
+*.log
+
+# repo hygiene (not shipped in the package)
+.github/
+.gitignore
+.gitattributes
+.editorconfig
+CHANGELOG.md
+CONTRIBUTING.md
+
+# runtime deps are resolved by the installer, not vendored
+node_modules/
+*.tgz

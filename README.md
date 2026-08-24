@@ -35,12 +35,17 @@ evening AI pass organizes the day's entries with categories, backlinks, a summar
 # 从 npm 安装(若已发布)
 dsh plugin --profile desktop add dsh-screenshot-capture
 
-# 或用本地/GitHub 目录
-dsh plugin --profile desktop add ./dsh-screenshot-capture
+# 从 GitHub 源安装
 dsh plugin --profile desktop add github:wangzhanchao883/dsh-screenshot-capture
+
+# 或用本地目录(开发时)
+dsh plugin --profile desktop add ./dsh-screenshot-capture
 ```
 
 重启 DSH 后生效。剪贴板监听与悬浮窗由插件 host 端自动拉起(需要 DSH 运行中)。
+
+> 首次使用请先在 DSH 设置 →「截图入库」里配置你的 Obsidian 库路径(以及可选的通义千问 API key)。
+> 未配置 `vaultPath` 时采集功能会自动停用并告警。
 
 ## 配置 / Configuration
 

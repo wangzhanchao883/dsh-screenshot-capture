@@ -61,10 +61,17 @@
   "keywords": [
     "deepseek-harness",
     "dsh",
+    "dsh-plugin",
+    "plugin",
     "screenshot",
+    "screenshot-capture",
     "clipboard",
+    "ocr",
     "obsidian",
-    "ocr"
+    "windows",
+    "winforms",
+    "productivity",
+    "automation"
   ],
   "license": "MIT"
 }
