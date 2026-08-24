@@ -6,7 +6,9 @@ export const DEFAULT_CONFIG = Object.freeze({
   enabled: true,
   pollIntervalMs: 200,
   cooldownMs: 2000,
-  vaultPath: "D:\\读书\\BaiduSyncdisk\\obsidiannote\\noteobsidain",
+  // 默认库路径留空:未配置时采集功能自动停用并告警,绝不创建无关目录。
+  // 首次使用请在 Web 设置 / config.json 里配置你自己的 Obsidian 库路径。
+  vaultPath: "",
   inboxFolder: "收件箱",
   attachmentsFolder: "attachments",
   knowledgeFolder: "知识库",
