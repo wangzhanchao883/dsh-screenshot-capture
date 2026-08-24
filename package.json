@@ -29,6 +29,7 @@
     "organize.mjs",
     "scripts/",
     "cordis.patch.yml",
+    "config.example.json",
     "README.md"
   ],
   "dsh": {
