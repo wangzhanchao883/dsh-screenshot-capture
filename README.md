@@ -23,6 +23,20 @@ evening AI pass organizes the day's entries with categories, backlinks, a summar
 - **晚间 AI 整理**:对当天收件箱条目,点选保留/保存全部 → 归类 → 生成分类笔记 + 双链 → 当日总结 → 归档;
 - **Web 图形配置界面**:DSH 设置 →「截图入库」,改动实时生效。
 
+## 截图 / Screenshots
+
+DSH 设置 →「截图入库」图形配置界面:
+
+![Settings](assets/screenshots/settings.png)
+
+截图后鼠标旁弹出的系统级悬浮窗(注释 + 重点 + 复制截图 / 存文档 / 存图片):
+
+![Floating window](assets/screenshots/floating-window.png)
+
+入库后的 Obsidian 按天合并笔记(含 OCR 文字):
+
+![Obsidian note](assets/screenshots/obsidian-note.png)
+
 ## 环境要求 / Requirements
 
 - **Windows**(依赖系统自带 PowerShell 5.1 + WinForms)
