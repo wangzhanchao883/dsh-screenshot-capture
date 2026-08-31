@@ -30,7 +30,8 @@
     "scripts/",
     "cordis.patch.yml",
     "config.example.json",
-    "README.md"
+    "README.md",
+    "screenshots.json"
   ],
   "dsh": {
     "bundle": {
