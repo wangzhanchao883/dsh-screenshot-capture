@@ -1,5 +1,5 @@
 {
-  "//": "dsh-screenshot-capture config example. Copy to %USERPROFILE%\\.dsh-screenshot-capture\\config.json and fill in your own values. The OCR key is also read from the DASHSCOPE_API_KEY environment variable (recommended).",
+  "//": "dsh-screenshot-capture config example. Copy to %USERPROFILE%\\.dsh-screenshot-capture\\config.json and fill in your own values. OCR defaults to the host's own multimodal model (mode \"host\", no API key needed); \"qwen\" uses the Tongyi Qianwen API with apiKey below or the DASHSCOPE_API_KEY environment variable.",
   "enabled": true,
   "vaultPath": "D:\\path\\to\\obsidian-vault",
   "inboxFolder": "收件箱",
@@ -9,7 +9,8 @@
   "archiveFolder": "归档",
   "recycleFolder": "回收站",
   "ocr": {
-    "mode": "qwen",
+    "mode": "host",
+    "hostModel": "",
     "model": "qwen-vl-plus",
     "apiKey": "",
     "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"

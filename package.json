@@ -1,7 +1,7 @@
 {
   "name": "dsh-screenshot-capture",
-  "version": "0.2.0",
-  "description": "Point-and-shoot screenshot capture for DeepSeek Harness: clipboard watcher + system floating window (comment & key-point, copy/save-doc/save-image) + instant OCR + Obsidian per-day merging + evening AI organization. 指哪拍哪 · 截图即存:剪贴板监听 + 鼠标位置系统级悬浮窗 + 即时 OCR + Obsidian 按天合并 + 晚间 AI 整理打双链",
+  "version": "0.2.2",
+  "description": "Point-and-shoot screenshot capture for DeepSeek Harness: clipboard watcher + system floating window (comment & key-point, copy/save-doc/save-image) + zero-config OCR through the host's own multimodal model (Tongyi Qianwen fallback) + Obsidian per-day merging + evening AI organization. 指哪拍哪 · 截图即存:剪贴板监听 + 鼠标位置系统级悬浮窗 + 用宿主大模型零配置识别(可回落通义千问) + Obsidian 按天合并 + 晚间 AI 整理打双链",
   "type": "module",
   "main": "index.mjs",
   "repository": {
@@ -40,7 +40,6 @@
     "client": {
       "inject": [
         "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-runtime",
         "@deepseek-ai/dsh-client-ui-settings"
       ],
       "platform": "web"
@@ -53,7 +52,7 @@
     "test:ocr": "node test/test-ocr.mjs"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "^3.18.1"
+    "@deepseek-ai/schemastery": "^3.18.4"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-tools": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0"
@@ -70,6 +69,8 @@
     "screenshot-capture",
     "clipboard",
     "ocr",
+    "multimodal",
+    "vlm",
     "obsidian",
     "windows",
     "winforms",

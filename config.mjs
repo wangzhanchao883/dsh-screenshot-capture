@@ -16,7 +16,11 @@ export const DEFAULT_CONFIG = Object.freeze({
   archiveFolder: "归档",
   recycleFolder: "回收站",
   ocr: {
-    mode: "qwen", // "qwen" | "off"
+    // 默认走**宿主大模型**(DSH 0.1.7+ 的 llm + attachments 服务):零配置、不用另申请 key。
+    // 宿主不可用 / 模型没声明图片输入时自动回落 qwen。取值:"host" | "qwen" | "off"
+    mode: "host",
+    // 空 = 跟随 DSH 当前默认模型;填了则强制用该模型(仍需它声明 inputModalities 含 image)
+    hostModel: "",
     model: "qwen-vl-plus",
     apiKey: "",
     endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
@@ -34,6 +38,27 @@ export function configPath() {
   return join(configDir(), "config.json");
 }
 
+/**
+ * 递归解包 DSH 0.1.7+ 的 volatile 配置形态。
+ *
+ * 宿主会把 Config schema 里盖过 `.volatile()` 的字段包成 Volatile cell
+ * (`{ get(): value }`，自身可枚举键只有 `get`) 再传进 `apply(ctx, input)`；
+ * 嵌套的普通对象不受影响。直接把它当值用会出事:
+ *   - `JSON.stringify(cell)` → `{}`(写进 watcher-config.json 就是 `{}`)
+ *   - `path.join(cell, "收件箱")` → TypeError(path must be of type string)
+ * 所以任何来自宿主的配置都要先过这一层。
+ */
+export function plain(value) {
+  if (Array.isArray(value)) return value.map(plain);
+  if (value !== null && typeof value === "object") {
+    if (typeof value.get === "function" && Object.keys(value).every((k) => k === "get")) {
+      return plain(value.get());
+    }
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, plain(v)]));
+  }
+  return value;
+}
+
 /** 合并默认配置 + 配置文件 + 运行时入参(DSh 插件配置覆盖最高) */
 export function resolveConfig(input = {}) {
   let file = {};
@@ -45,7 +70,7 @@ export function resolveConfig(input = {}) {
     file = {};
   }
   const merged = mergeDeep(structuredClone(DEFAULT_CONFIG), file);
-  return mergeDeep(merged, input);
+  return mergeDeep(merged, plain(input));
 }
 
 export function saveConfig(config) {

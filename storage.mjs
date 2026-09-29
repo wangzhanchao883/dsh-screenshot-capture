@@ -20,11 +20,46 @@ export function attachmentRelPath(config, date, fileStamp, kind) {
   return `${config.attachmentsFolder}/${fileStamp}_${kind}.png`;
 }
 
-/** 把剪贴板临时图复制进 vault 附件,返回 vault 内相对路径 */
+/**
+ * 同步重试写入。Obsidian / 同步盘会短暂占用文件(EBUSY/EPERM),
+ * 一次写失败就丢掉整段 OCR 文字太亏,所以按 60/120/180ms 退避重试。
+ */
+function sleepSync(ms) {
+  try {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+  } catch {
+    /* 环境不允许同步等待就直接继续 */
+  }
+}
+
+function writeFileRetry(path, text, attempts = 4) {
+  let lastErr;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      writeFileSync(path, text, "utf8");
+      return;
+    } catch (err) {
+      lastErr = err;
+      if (!["EBUSY", "EPERM", "EACCES"].includes(err.code)) throw err;
+      sleepSync(60 * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
+/**
+ * 把剪贴板临时图复制进 vault 附件,返回 vault 内相对路径。
+ * 同一秒内连拍两张时 `fileStamp` 会撞车(文件名相同 → 后者覆盖前者),
+ * 所以目标已存在就顺延 `_2`、`_3`…(相对路径会带这个后缀,笔记里也对得上)。
+ */
 export function saveAttachment(config, srcPath, date, fileStamp, kind) {
   ensureVault(config);
-  const rel = attachmentRelPath(config, date, fileStamp, kind);
-  const dest = join(config.vaultPath, config.inboxFolder, rel);
+  let rel = attachmentRelPath(config, date, fileStamp, kind);
+  let dest = join(config.vaultPath, config.inboxFolder, rel);
+  for (let i = 2; existsSync(dest); i += 1) {
+    rel = `${config.attachmentsFolder}/${fileStamp}_${kind}_${i}.png`;
+    dest = join(config.vaultPath, config.inboxFolder, rel);
+  }
   copyFileSync(srcPath, dest);
   return rel;
 }
@@ -62,25 +97,44 @@ export function appendEntry(config, { date, time, kind, imageRel, ocrText = null
   }
   const existing = readFileSync(path, "utf8");
   const updated = existing.replace(/\n*$/, "\n") + block.join("\n") + "\n";
-  writeFileSync(path, updated, "utf8");
+  writeFileRetry(path, updated);
   return path;
 }
 
-/** 更新某条记录的 OCR 文字(按时间+图片文件名定位占位行) */
+/**
+ * 更新某条记录的 OCR 文字:按**图片文件名**定位条目块,再替换块内的占位行。
+ *
+ * 旧实现用 `## <time> #文档\n\n![…](…)\n\n> OCR: 识别中…` 一整个正则硬匹配,有三个脆弱点:
+ *   ① 行尾必须是纯 LF(CRLF 的笔记直接不匹配);
+ *   ② 同一分钟内连拍两张时 time 相同,全靠文件名兜住;
+ *   ③ 匹配不上就 `return null`,**调用方拿不到任何信号** → 笔记里干留「识别中…」。
+ * 现在:定位失败/占位符缺失都返回 `{ ok:false, reason }`,由调用方打日志 + 告知用户。
+ */
 export function updateEntryOcr(config, { date, time, imageRel, ocrText }) {
   const path = dailyNotePath(config, date);
-  if (!existsSync(path)) return null;
+  if (!existsSync(path)) return { ok: false, path: null, reason: `笔记不存在(${date})` };
+  const fileName = String(imageRel ?? "").split("/").pop();
+  if (!fileName) return { ok: false, path: null, reason: "缺少图片文件名" };
+
   const text = readFileSync(path, "utf8");
-  const fileName = imageRel.split("/").pop();
-  const marker = "> OCR: 识别中…";
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(
-    `(## ${time} #文档\\n\\n!\\[[^\\]]*${esc(fileName)}[^\\]]*\\]\\([^)]*\\)\\n\\n)(> OCR: 识别中…)`,
-  );
-  if (!re.test(text)) return null;
-  const updated = text.replace(re, `$1> OCR: ${ocrText || "（无文字）"}`);
-  writeFileSync(path, updated, "utf8");
-  return path;
+  const imgIdx = text.search(new RegExp(`!\\[[^\\]]*${esc(fileName)}[^\\]]*\\]\\(`));
+  if (imgIdx === -1) return { ok: false, path: null, reason: `笔记里找不到图片 ${fileName}` };
+
+  const headerIdx = text.lastIndexOf("## ", imgIdx);
+  if (headerIdx === -1) return { ok: false, path: null, reason: `图片 ${fileName} 不在任何条目块里` };
+  const nextIdx = text.indexOf("\n## ", imgIdx);
+  const end = nextIdx === -1 ? text.length : nextIdx;
+  const block = text.slice(headerIdx, end);
+
+  const markerRe = /^> OCR: 识别中…[ \t]*$/m;
+  if (!markerRe.test(block)) {
+    return { ok: false, path: null, reason: `条目 ${time} 里没有待回填的 OCR 占位符(可能已回填过)` };
+  }
+
+  const newBlock = block.replace(markerRe, `> OCR: ${ocrText || "（无文字）"}`);
+  writeFileRetry(path, text.slice(0, headerIdx) + newBlock + text.slice(end));
+  return { ok: true, path, reason: "" };
 }
 
 /** 解析当天笔记为条目列表 */

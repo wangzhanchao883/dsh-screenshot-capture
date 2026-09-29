@@ -238,7 +238,11 @@ window.__ModuleLoader__.load({
       }, "dsh-screenshot-capture: dictionaries");
 
       const t = ctx.locale.bind(NS);
-      const scope = ctx.settingsScope.bind({ namespace: SETTINGS_NAMESPACE });
+      // DSH 0.1.7:客户端设置服务由 settingsScope(每插件各自 bind 一份视图)换成了
+      // configForms(全体共用一份 Host 设置文档镜像)。get(entryId) 的 entryId 就是
+      // host 条目 id。返回的 ConfigFormController 与旧 scope 方法同签名
+      // (getSnapshot / subscribe / set),所以下面的组件体一行都不用改。
+      const scope = ctx.configForms.get(SETTINGS_NAMESPACE);
       const injected = () => ({ scope });
 
       ctx.slots.inject("settings.section", () => ctx.slots.register({
@@ -253,7 +257,7 @@ window.__ModuleLoader__.load({
 
     module.exports = {
       name: "dsh-screenshot-capture",
-      inject: ["slots", "locale", "settingsScope"],
+      inject: ["slots", "locale", "configForms"],
       apply,
     };
     return module.exports;
