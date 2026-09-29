@@ -3,6 +3,38 @@
 All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.3] - 2026-09-29
+
+### Changed — DSH 0.2 compatibility / 兼容 DSH 0.2
+
+**No functional code changed** — the peer range is the whole of it, the same shape our other plugins use.
+Verified locally on **DSH `0.2.0-rc.1`**: `--dump-config` composes the plugin with no `FAILED` /
+`rejected`, an isolated instance starts with zero `did not activate`, and the settings projection
+still reports the entry as `applies: live` with all 13 fields.
+
+- **Raised the peer upper bound.** `@deepseek-ai/dsh-tools` went from
+  `>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0` to
+  `>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`.
+  The old bound excludes **every** `0.2.0` prerelease, and the harness gate compares the **whole DSH
+  version** (not the version of `dsh-tools` actually installed). 0.1.7 merely skipped such a plugin at
+  startup; 0.2.0 rejects it at install time (`installation rejected` / `nothing was installed`).
+- `@deepseek-ai/schemastery` moved from `dependencies` to an **optional peer**
+  (`>=3.18.0 <4.0.0` + `peerDependenciesMeta.optional`), matching our other plugins: the harness
+  resolves `@deepseek-ai/*` imports from its own package tree, and the non-optional `dsh-tools` peer
+  pulls `schemastery` down transitively anyway.
+- Semver notes, verified against npm's own `semver` in **both** modes (`_diag/scc-peer-semver.mjs`):
+
+  | version | old range | new range |
+  |---|---|---|
+  | `0.1.5-rc.3` / `0.1.7-rc.2` | true | true |
+  | `0.2.0-rc.1` / `0.2.0` / `0.2.1` | **false** | **true** |
+  | `0.3.0-rc.1` | false | false |
+
+  With `includePrerelease: true` — what the harness gate passes — that table is the whole story. In
+  plain (flagless) mode the explicit `>=0.2.0-rc.1` branch is what makes `0.2.0-rc.1` match at all
+  (node-semver's prerelease-tuple rule), and in that mode `0.1.7-rc.2` would be rejected too — which is
+  why the gate always passes the flag.
+
 ## [0.2.2] - 2026-09-29
 
 OCR now runs on the **host's own multimodal model by default (zero extra API key)**, plus fixes for

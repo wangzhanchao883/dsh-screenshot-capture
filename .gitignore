@@ -22,3 +22,6 @@ _repro*
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# npm pack 产物(别提交)
+*.tgz
