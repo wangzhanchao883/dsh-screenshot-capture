@@ -22,6 +22,8 @@ OCR uses the **host's own multimodal model by default — no extra API key** —
 - **存图片**:仅图片入库(`#图片` 标签);
 - **即时 OCR**:默认用**宿主大模型**(DSH 已在用的多模态模型,零配置、不用另申请 key);宿主不可用时自动回落通义千问;两条都不可用会在笔记里写明原因,不影响入库;
 - **助手自愈(v0.2.2)**:常驻的剪贴板助手指令意外退出时,按退避自动重启(2s→30s,最多 5 次)并告警,不再"截图静默失效";
+- **同一屏去重(v0.2.2)**:Windows 截图工具偶尔会把**同一屏**往剪贴板连写两遍(实测两张只差 1 像素、相隔 3 秒),助手按 32×32 灰度指纹比对,`dupWindowMs`(默认 6 秒)内的近似同屏只弹一次窗、只存一条;
+- **回填不丢字(v0.2.2)**:笔记被云同步盘 / Obsidian 短暂占用时,写入按 ~4.6 秒退避重试并改走"临时文件 + 原子替换";两次仍失败会把识别结果暂存到 `%TEMP%\dsh-capture\pending-ocr.jsonl` 并告警;
 - **晚间 AI 整理**:对当天收件箱条目,点选保留/保存全部 → 归类 → 生成分类笔记 + 双链 → 当日总结 → 归档;
 - **Web 图形配置界面**:DSH 设置 →「截图入库」,改动实时生效。
 
@@ -72,8 +74,10 @@ dsh plugin --profile desktop add ./dsh-screenshot-capture
 
 DSH Web 界面 → 侧栏 **设置** → **截图入库** 分区,直接改:
 - 通用:启用监听、Obsidian 库路径、轮询间隔、冷却时间
-- OCR:识别通道(`host` 宿主模型 / `qwen` 通义千问 / `off` 关闭)、宿主模型(留空 = 跟随 DSH 当前默认模型)、千问模型、千问 API Key(留空则用环境变量)
+- OCR:识别通道(`host` 宿主大模型(默认) / `off` 关闭)、宿主模型(留空 = 跟随 DSH 当前默认模型)
 - 悬浮窗:横向/纵向偏移、预览最大宽度
+
+> 面板里**不再有千问配置项**(v0.2.2 起):宿主模型是默认通道,千问只作为自动回落,key 从 `DASHSCOPE_API_KEY` 环境变量或 `config.json` 读取,不需要在界面上填。
 
 改动**实时生效**(DSH 会热重载本插件,监听器随之重启)。配置写入 profile 的条目 config
 (`cordis.patch.yml` 里 `insert[].config`),它就是权威值;`config.json` 只作为下面的 base 层。
@@ -90,13 +94,15 @@ DSH Web 界面 → 侧栏 **设置** → **截图入库** 分区,直接改:
   "vaultPath": "D:\\path\\to\\obsidian-vault",
   "ocr": { "mode": "host", "hostModel": "", "model": "qwen-vl-plus", "apiKey": "" },
   "pollIntervalMs": 200,
-  "cooldownMs": 2000
+  "cooldownMs": 2000,
+  "dupWindowMs": 6000
 }
 ```
 
-- `ocr.mode` 三选一:`"host"`(默认,宿主多模态模型)、`"qwen"`(通义千问)、`"off"`(不识别);
+- `ocr.mode` 三选一:`"host"`(默认,宿主多模态模型)、`"qwen"`(通义千问)、`"off"`(不识别;`qwen` 面板里不提供,配置里仍兼容);
 - `ocr.hostModel` 留空 = 跟随 DSH 当前默认模型;填了就用指定模型(仍需该模型声明图片输入);
-- 千问 key 也可放环境变量 `DASHSCOPE_API_KEY`(避免明文落盘),只在 `host` 失败回落时用到。
+- 千问 key 也可放环境变量 `DASHSCOPE_API_KEY`(避免明文落盘),只在 `host` 失败回落时用到;
+- `dupWindowMs` = 同屏去重窗口(毫秒,默认 6000,`0` 关闭);面板里不提供,需要时改这里。
 
 > 注意:插件**默认不带库路径**(为空)。未配置 `vaultPath` 时,采集功能会自动停用并告警,不会创建任何目录。首次使用请务必在 Web 设置 / `config.json` 里配置你自己的 Obsidian 库路径。
 

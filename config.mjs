@@ -27,6 +27,9 @@ export const DEFAULT_CONFIG = Object.freeze({
     prompt: "请识别图片中的全部文字内容,原样输出;数学公式用 LaTeX 输出。只输出识别结果,不要任何解释。",
   },
   dialog: { offsetX: 16, offsetY: 16, previewMaxWidth: 320 },
+  // 同一屏被剪贴板连写两遍(Snipping Tool 常见)时的去重窗口,毫秒;0 = 关闭去重。
+  // 不进设置面板(保持面板干净),需要时改 config.json。
+  dupWindowMs: 6000,
   organize: { addBacklinks: true },
 });
 

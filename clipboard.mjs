@@ -47,6 +47,8 @@ export class ClipboardWatcher extends EventEmitter {
       offsetX: this.config.dialog?.offsetX ?? 16,
       offsetY: this.config.dialog?.offsetY ?? 16,
       previewMaxWidth: this.config.dialog?.previewMaxWidth ?? 320,
+      // 同一屏被剪贴板写两遍时的去重窗口(秒级);0 = 不去重
+      dupWindowMs: this.config.dupWindowMs ?? 6000,
     }), "utf8");
 
     const args = [

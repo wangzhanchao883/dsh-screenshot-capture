@@ -21,8 +21,11 @@ export function attachmentRelPath(config, date, fileStamp, kind) {
 }
 
 /**
- * 同步重试写入。Obsidian / 同步盘会短暂占用文件(EBUSY/EPERM),
- * 一次写失败就丢掉整段 OCR 文字太亏,所以按 60/120/180ms 退避重试。
+ * 同步重试写入。Obsidian / 云同步盘(BaiduSyncdisk 这类)会短暂占用文件(EBUSY/EPERM),
+ * 一次写失败就丢掉整段 OCR 文字太亏:
+ *   ① 退避重试拉长到 ~4.6s(100/300/600/1200/2400ms);
+ *   ② 直接写被占用时改走「写临时文件 + 原子替换」;
+ *   ③ 仍失败才抛错,由调用方兜底暂存识别结果。
  */
 function sleepSync(ms) {
   try {
@@ -32,7 +35,8 @@ function sleepSync(ms) {
   }
 }
 
-function writeFileRetry(path, text, attempts = 4) {
+function writeFileRetry(path, text, attempts = 6) {
+  const delays = [100, 300, 600, 1200, 2400];
   let lastErr;
   for (let i = 0; i < attempts; i += 1) {
     try {
@@ -41,7 +45,15 @@ function writeFileRetry(path, text, attempts = 4) {
     } catch (err) {
       lastErr = err;
       if (!["EBUSY", "EPERM", "EACCES"].includes(err.code)) throw err;
-      sleepSync(60 * (i + 1));
+      try {
+        const tmp = `${path}.scc-tmp`;
+        writeFileSync(tmp, text, "utf8");
+        renameSync(tmp, path);
+        return;
+      } catch (err2) {
+        lastErr = err2;
+      }
+      sleepSync(delays[Math.min(i, delays.length - 1)]);
     }
   }
   throw lastErr;

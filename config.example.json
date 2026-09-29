@@ -17,6 +17,7 @@
   },
   "pollIntervalMs": 200,
   "cooldownMs": 2000,
+  "dupWindowMs": 6000,
   "dialog": { "offsetX": 16, "offsetY": 16, "previewMaxWidth": 320 },
   "organize": { "addBacklinks": true }
 }

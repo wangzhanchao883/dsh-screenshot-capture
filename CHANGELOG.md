@@ -24,6 +24,18 @@ fixed below, so this release ships both.
 - **Clipboard helper auto-restart**: when `clip-dialog.ps1` exits unexpectedly the watcher restarts
   it with backoff (2s → 30s, up to 5 attempts) and warns loudly. Previously a single crash meant
   "screenshots silently stop working" until DSH was restarted.
+- **Duplicate-screen guard.** Windows' snipping tool can push the *same* screen to the clipboard
+  twice within a few seconds (measured: two images 1 px apart, 3 s apart), which used to mean two
+  dialogs and two archived copies for one screenshot. The helper now compares a coarse 32×32 grey
+  fingerprint against the last captures and skips near-identical ones inside `dupWindowMs`
+  (default 6000 ms, `config.json` only; `0` disables the guard) and logs `{"t":"dup"}`.
+
+### Changed
+
+- **Simpler OCR section in the settings panel.** It now offers just 识别通道
+  (`host` = the DSH model, `off`) plus 宿主模型 (`ocrHostModel`, empty = follow the DSH default).
+  The Qwen model / API-key fields are gone from the panel — the Tongyi fallback still works and
+  reads its key from `DASHSCOPE_API_KEY` or `config.json`.
 
 ### Fixed
 
@@ -42,6 +54,13 @@ fixed below, so this release ships both.
   reason instead of silently returning null**, and note writes retry on transient `EBUSY`/`EPERM`.
 - Same-second captures no longer overwrite each other's attachment file
   (`…_文档.png` / `…_文档_2.png`).
+- **The OCR text is no longer lost when the note is briefly locked.** Cloud-sync folders and
+  Obsidian hold the note open for short windows; a failed write used to leave `> OCR: 识别中…`
+  behind with the recognized text gone. Writes now back off over ~4.6 s, fall back to
+  "write a temp file and replace", retry the whole update once after 800 ms, and if everything
+  still fails the text is salvaged to `%TEMP%\dsh-capture\pending-ocr.jsonl` with a loud warning.
+- The dialog helper's duplicate-screen fingerprint also covers the case where the second clipboard
+  push differs by a pixel or two, which byte comparison would have missed.
 
 ### Compatibility
 

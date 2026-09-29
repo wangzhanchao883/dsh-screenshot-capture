@@ -47,14 +47,66 @@ function Write-Event([hashtable]$obj) {
   try { [Console]::Out.WriteLine($line); [Console]::Out.Flush() } catch {}
 }
 
-$config = @{ pollIntervalMs = 200; cooldownMs = 2000; offsetX = 16; offsetY = 16; previewMaxWidth = 320 }
+$config = @{ pollIntervalMs = 200; cooldownMs = 2000; offsetX = 16; offsetY = 16; previewMaxWidth = 320; dupWindowMs = 6000 }
 if ($ConfigPath -and (Test-Path $ConfigPath)) {
   try {
     $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json
-    foreach ($k in @('pollIntervalMs','cooldownMs','offsetX','offsetY','previewMaxWidth')) {
+    foreach ($k in @('pollIntervalMs','cooldownMs','offsetX','offsetY','previewMaxWidth','dupWindowMs')) {
       if ($null -ne $cfg.$k) { $config[$k] = $cfg.$k }
     }
   } catch { Write-Event @{ t = "err"; msg = "config parse: $($_.Exception.Message)" } }
+}
+
+# --- duplicate-screen guard -------------------------------------------------
+# Windows' snipping tool can push the SAME screen to the clipboard twice within a
+# few seconds (measured 2026-09-29: two images 1 px apart, 3 s apart). Without a
+# guard that is two dialogs and two archived copies for one screenshot. Compare a
+# coarse 32x32 grey fingerprint against the recent captures and skip near-identical
+# ones inside dupWindowMs.
+$dupPixelsAllowed = 64   # of 1024 cells (6%); same screen stays well under it
+$recentSignatures = @()
+
+function Get-ImageSignature([System.Drawing.Image]$image) {
+  $bmp = New-Object System.Drawing.Bitmap 32, 32
+  try {
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    try { $g.DrawImage($image, 0, 0, 32, 32) } finally { $g.Dispose() }
+    $sig = New-Object 'int[]' 1024
+    for ($y = 0; $y -lt 32; $y++) {
+      for ($x = 0; $x -lt 32; $x++) {
+        $c = $bmp.GetPixel($x, $y)
+        $lum = ($c.R * 0.299) + ($c.G * 0.587) + ($c.B * 0.114)
+        $sig[($y * 32) + $x] = [int][Math]::Floor($lum / 16)
+      }
+    }
+    return , $sig
+  } finally {
+    $bmp.Dispose()
+  }
+}
+
+function Test-SimilarSignature($a, $b, [int]$allowed) {
+  $diff = 0
+  for ($i = 0; $i -lt $a.Length; $i++) {
+    if ($a[$i] -ne $b[$i]) {
+      $diff++
+      if ($diff -gt $allowed) { return $false }
+    }
+  }
+  return $true
+}
+
+function Test-DuplicateCapture($sig, $now) {
+  foreach ($entry in $recentSignatures) {
+    if (($now - $entry.at).TotalMilliseconds -le [int]$config.dupWindowMs) {
+      if (Test-SimilarSignature $sig $entry.sig $dupPixelsAllowed) { return $true }
+    }
+  }
+  return $false
+}
+
+function Remember-Signature($sig, $now) {
+  $script:recentSignatures = @(@{ sig = $sig; at = $now }) + @($recentSignatures | Select-Object -First 4)
 }
 
 function Show-CaptureDialog {
@@ -172,6 +224,13 @@ while ($true) {
   $img = $null
   try { $img = [System.Windows.Forms.Clipboard]::GetImage() } catch { continue }
   if ($null -eq $img) { continue }
+  $sig = Get-ImageSignature $img
+  if (Test-DuplicateCapture $sig $now) {
+    $img.Dispose()
+    Write-Event @{ t = "dup"; seq = $seq }
+    continue
+  }
+  Remember-Signature $sig $now
   $lastHandled = $now
   $ts = Get-Date -Format "yyyyMMdd_HHmmss_fff"
   $pngPath = Join-Path $tempDir ("clip_{0}.png" -f $ts)

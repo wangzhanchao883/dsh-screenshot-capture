@@ -1,4 +1,6 @@
-import { unlinkSync } from "node:fs";
+import { appendFileSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { ocrImage } from "./ocr.mjs";
 import {
   appendEntry,
@@ -7,6 +9,9 @@ import {
   stampParts,
   updateEntryOcr,
 } from "./storage.mjs";
+
+/** 回填彻底失败时,识别结果的兜底暂存位置(每行一个 JSON) */
+const PENDING_OCR_LOG = join(tmpdir(), "dsh-capture", "pending-ocr.jsonl");
 
 /**
  * 串行队列:保证同一时刻只有一个任务在跑。
@@ -67,13 +72,7 @@ export async function handleChoice(config, { action, path, note = "", isKey = fa
   }
 
   const text = ocrError ? `（识别失败:${ocrError}）` : ocrText;
-  const written = updateEntryOcr(config, { date, time, imageRel, ocrText: text });
-  if (!written.ok) {
-    // 回填失败必须留痕:以前只 return null,笔记里就干留一句「识别中…」,谁也看不出出了问题
-    host.logger?.warn?.(
-      `dsh-screenshot-capture: OCR 文字没能写回笔记(${written.reason});图片 ${imageRel},识别结果 ${text.length} 字`,
-    );
-  }
+  const written = await writeBackWithRetry(config, { date, time, imageRel, ocrText: text }, host);
   return {
     action,
     date,
@@ -89,4 +88,35 @@ export async function handleChoice(config, { action, path, note = "", isKey = fa
         ? `已存文档(含 OCR 文字,${ocrText.length} 字)`
         : `已存文档,但文字没能写回笔记:${written.reason}`,
   };
+}
+
+/**
+ * 把识别结果写回笔记(带重试与兜底暂存)。
+ *
+ * 单次失败不再直接放弃:云同步盘 / Obsidian 会短暂占用文件,先等 800ms 重试一次;
+ * 两次都不行就把识别结果**暂存**到 %TEMP%\dsh-capture\pending-ocr.jsonl 并明确告警,
+ * 绝不静默丢字(2026-09-29 现场:一条卡在「OCR: 识别中…」,其实文字已经识别出来了)。
+ */
+async function writeBackWithRetry(config, payload, host) {
+  let result = { ok: false, reason: "未执行" };
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      result = updateEntryOcr(config, payload);
+    } catch (err) {
+      result = { ok: false, reason: `写入异常 ${err.code ?? ""} ${err.message}`.trim() };
+    }
+    if (result.ok) return result;
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 800));
+  }
+  try {
+    appendFileSync(PENDING_OCR_LOG, `${JSON.stringify({ at: new Date().toISOString(), ...payload })}\n`, "utf8");
+    result.salvaged = PENDING_OCR_LOG;
+  } catch {
+    /* 暂存都失败就只能靠日志 */
+  }
+  host.logger?.warn?.(
+    `dsh-screenshot-capture: OCR 文字没能写回笔记(${result.reason});图片 ${payload.imageRel}` +
+      (result.salvaged ? `;识别结果已暂存 ${result.salvaged}` : ";识别结果仅在日志里"),
+  );
+  return result;
 }
