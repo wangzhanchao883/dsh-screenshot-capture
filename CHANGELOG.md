@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.4] - 2026-10-02
+
+**发布通道迁移 —— 无代码变更、无行为变更。**
+
+改用 npm Trusted Publishing（GitHub Actions + OIDC）发布，不再依赖任何长期令牌。
+本版本用于验证新的发布链路，并让该版本带上 provenance（可验证的来源证明）。
+
 ## [0.2.3] - 2026-09-29
 
 ### Changed — DSH 0.2 compatibility / 兼容 DSH 0.2

@@ -1,6 +1,6 @@
 {
   "name": "dsh-screenshot-capture",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Point-and-shoot screenshot capture for DeepSeek Harness: clipboard watcher + system floating window (comment & key-point, copy/save-doc/save-image) + zero-config OCR through the host's own multimodal model (Tongyi Qianwen fallback) + Obsidian per-day merging + evening AI organization. 指哪拍哪 · 截图即存:剪贴板监听 + 鼠标位置系统级悬浮窗 + 用宿主大模型零配置识别(可回落通义千问) + Obsidian 按天合并 + 晚间 AI 整理打双链",
   "type": "module",
   "main": "index.mjs",
